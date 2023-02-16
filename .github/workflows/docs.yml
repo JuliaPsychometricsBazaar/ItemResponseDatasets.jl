@@ -29,12 +29,12 @@ jobs:
       - name: Install GitHubActions.jl in docs env
         run: |
           julia --project=docs/ -e '
-            using Pkg
+            using Pkg;
             Pkg.add(Pkg.PackageSpec(name="GitHubActions", version="0.1"))'
       - name: Install dependencies
         run: julia --project=docs/ -e '
-            using Pkg
-            Pkg.develop(PackageSpec(path=pwd()))
+            using Pkg;
+            Pkg.develop(PackageSpec(path=pwd()));
             Pkg.instantiate()'
       - name: Make docs
         run: |
