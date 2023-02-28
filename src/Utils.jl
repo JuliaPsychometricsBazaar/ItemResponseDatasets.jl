@@ -5,10 +5,9 @@ using UrlDownload
 using ZipFile
 using CSV
 using DataFrames
+using Scratch
 
 export get_single_csv_zip, file_cache
-
-const IRT_DATASET_CACHE_VAR = "IRT_DATASETS_CACHE"
 
 function get_single_csv_zip(url)
     @info "Downloading" url
@@ -30,13 +29,10 @@ end
 
 function file_cache(path, get_fn, read_fn, write_fn)
     function inner(args...; kwargs...)
-        full_path = nothing
-        if IRT_DATASET_CACHE_VAR in keys(ENV)
-            full_path = joinpath(ENV[IRT_DATASET_CACHE_VAR], path)
-            if isfile(full_path)
-                @info "Using cached $full_path"
-                return read_fn(full_path)
-            end
+        full_path = joinpath(cache, path)
+        if isfile(full_path)
+            @info "Using cached $full_path"
+            return read_fn(full_path)
         end
         ret = get_fn(args..., kwargs...)
         if full_path !== nothing
@@ -46,6 +42,12 @@ function file_cache(path, get_fn, read_fn, write_fn)
         return ret
     end
     inner
+end
+
+cache::Union{Nothing, String} = nothing
+
+function __init__()
+    global cache = get_scratch!(@__MODULE__, "cache")
 end
 
 end
