@@ -15,6 +15,7 @@ module MGKT
 import JSON
 
 using ..Utils
+import ..SelectMultiplePartial, ..PromptedTask
 using Serialization
 using DataFrames
 using CSV
@@ -54,32 +55,26 @@ codebook_json = """
 }
 """
 
-struct Question
-    text::String
-    correct::Vector{String}
-    incorrect::Vector{String}
-end
-
-function answers(question)
-    return shuffle(question.correct + question.incorrect)
-end
-
 function process_codebook()
     codebook = JSON.parse(replace(codebook_json, "'" => "\""))
     results = []
     for q_idx in 1:32
-        d = codebook["Q" + string(q_idx )]
+        d = codebook["Q" * string(q_idx )]
         correct = []
         incorrect = []
         for a_idx in 0:9
-            a = d["A" + string(a_idx)]
+            a = d["A" * string(a_idx)]
             if a_idx <= 4
                 push!(correct, a)
             else
                 push!(incorrect, a)
             end
         end
-        push!(results, Question(text=d["text"], correct=correct, incorrect=incorrect))
+        task = PromptedTask(
+            "5/10 answers are correct. Select as many as they knew, but do not guess\n" * d["text"],
+            SelectMultiplePartial(correct=Set(correct), incorrect=Set(incorrect))
+        )
+        push!(results, task)
     end
 end
 
@@ -93,7 +88,7 @@ end
 """
 This function gets a marked version of the MGTK.
 """
-function get_summary_df()
+function get_marked_df()
     mgkt = get_mgkt()
     mgkt = select(mgkt, r"Q[0-9]+S")
     for col in names(mgkt)
@@ -104,10 +99,14 @@ function get_summary_df()
     mgkt
 end
 
-get_summary_df_cached = file_cache("mgkt/summary.csv", get_summary_df, x -> CSV.read(x, DataFrame), CSV.write)
+get_marked_df_cached = file_cache("mgkt/summary.csv", get_marked_df, x -> CSV.read(x, DataFrame), CSV.write)
 
 function prompt_response(response_idx)
     codebook["Q" + string(response_idx)]
 end
+
+questions = process_codebook()
+
+export get_mgkt, get_marked_df, get_marked_df_cached, questions
 
 end

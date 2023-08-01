@@ -11,6 +11,7 @@ The main body of the test had 45 vocabulary questions. Each question was a list 
 module VocabIQ
 
 using ..Utils
+import ..SelectMultipleExact, ..PromptedTask
 using Serialization
 using DataFrames
 using CSV
@@ -65,21 +66,20 @@ Q45 	9 	fixed rotund stagnant permanent shifty
 
 function parse_coding()
     lines = split(strip(answers_txt), "\n")
-    ans_dict = Dict()
-    potential_answers = Array{String}(undef, (length(lines), 5)) 
-    gold_answers = Array{String}(undef, (length(lines), 2)) 
+    results = []
     for (idx, line) in enumerate(lines)
         l = split(line)
         true_answer = parse(Int, l[2])
         bv = BitVector(undef, 5)
         bv.chunks[1] = true_answer
         words = l[3:end]
-        true_answer 
-        ans_dict[l[1]] = true_answer 
-        potential_answers[idx, :] = words
-        gold_answers[idx, :] = words[bv]
+        #potential_answers[idx, :] = words
+        #gold_answers[idx, :] = words[bv]
+        correct = Set(words[bv])
+        incorrect = setdiff(Set(words), correct)
+        push!(results, PromptedTask(prompt="Select the two words with the same meaning", task=SelectMultipleExact(correct=correct, incorrect=incorrect)))
     end
-    ans_dict, potential_answers, gold_answers 
+    results
 end
 
 """
@@ -103,33 +103,8 @@ end
 
 get_marked_df_cached = file_cache("viqt/marked.csv", get_marked_df, x -> CSV.read(x, DataFrame), CSV.write)
 
-answers, potential_answers, gold_answers = parse_coding()
+questions = parse_coding()
 
-function prompt_response(response_idx)
-    options = potential_answers[response_idx, :]
-    options_fmt = join(options, "/")
-
-    function get_word(idx)
-        while true
-            print("Which two of $options_fmt have the same meaning $idx/2 (blank = do not know) > ")
-            word = readline()
-            if strip(word) == ""
-                return nothing
-            end
-            if word in options
-                return word
-            end
-            println("Could not find $word in $options_fmt")
-        end
-    end
-    word1 = get_word(1)
-    word2 = get_word(2)
-    if word1 === nothing || word2 === nothing
-        return 0
-    end
-    return Set([word1, word2]) == Set(gold_answers[response_idx, :]) ? 1 : 0
-end
-
-export get_viqt, get_marked_df, get_marked_df_cached, answers, potential_answers, gold_answers, prompt_response
+export get_viqt, get_marked_df, get_marked_df_cached, questions
 
 end
