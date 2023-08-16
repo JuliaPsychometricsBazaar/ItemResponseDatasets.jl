@@ -55,7 +55,7 @@ codebook_json = """
 }
 """
 
-function process_codebook()
+function process_codebook()::Vector{PromptedTask}
     codebook = JSON.parse(replace(codebook_json, "'" => "\""))
     results = []
     for q_idx in 1:32
@@ -76,6 +76,7 @@ function process_codebook()
         )
         push!(results, task)
     end
+    return results
 end
 
 """
