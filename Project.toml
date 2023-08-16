@@ -1,7 +1,7 @@
 name = "ItemResponseDatasets"
 uuid = "e47bb625-2913-44fb-8b24-b88572ac4ea9"
 authors = ["Frankie Robertson <frankie@robertson.name>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
