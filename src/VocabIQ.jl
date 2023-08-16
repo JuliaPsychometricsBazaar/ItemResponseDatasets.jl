@@ -64,8 +64,9 @@ Q44 	10 	cardinal pilot full trial inkling
 Q45 	9 	fixed rotund stagnant permanent shifty 
 """
 
-function parse_coding()
+function parse_coding()::Tuple{Dict{String, Int}, Vector{PromptedTask}}
     lines = split(strip(answers_txt), "\n")
+    raw_answers = Dict()
     results = []
     for (idx, line) in enumerate(lines)
         l = split(line)
@@ -73,13 +74,12 @@ function parse_coding()
         bv = BitVector(undef, 5)
         bv.chunks[1] = true_answer
         words = l[3:end]
-        #potential_answers[idx, :] = words
-        #gold_answers[idx, :] = words[bv]
+        raw_answers[l[1]] = true_answer
         correct = Set(words[bv])
         incorrect = setdiff(Set(words), correct)
         push!(results, PromptedTask(prompt="Select the two words with the same meaning", task=SelectMultipleExact(correct=correct, incorrect=incorrect)))
     end
-    results
+    raw_answers, results
 end
 
 """
@@ -96,14 +96,14 @@ function get_marked_df()
     viqt = get_viqt()
     viqt = select(viqt, r"^Q")
     for col in names(viqt)
-        viqt[!, col] = Int.(viqt[!, col] .== answers[col])
+        viqt[!, col] = Int.(viqt[!, col] .== raw_answers[col])
     end
     viqt
 end
 
 get_marked_df_cached = file_cache("viqt/marked.csv", get_marked_df, x -> CSV.read(x, DataFrame), CSV.write)
 
-questions = parse_coding()
+raw_answers, questions = parse_coding()
 
 export get_viqt, get_marked_df, get_marked_df_cached, questions
 
