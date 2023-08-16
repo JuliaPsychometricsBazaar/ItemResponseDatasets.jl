@@ -2,6 +2,8 @@ module ItemResponseDatasets
 
 using Random
 
+export Task, SelectMultiple, SelectMultipleExact, SelectMultiplePartial, PromptedTask, prompt_readline
+
 abstract type Task end
 abstract type SelectMultiple <: Task end
 
